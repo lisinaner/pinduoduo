@@ -8,8 +8,9 @@ const port = 3000
 app.use(express.static('public'))
 app.get('/a', (req, res) => {
 	let pwd=req.query.pwd
+	let start=req.query.start
 	let outputArr=[]
-	let data = '{"type":"unreceived","page":1,"page_from":0,"size":50,"offset":"230626-094146477680931"}';
+	let data = {"type":"unreceived","page":1,"page_from":0,"size":50,"offset":start};
 
 	let config = {
 	  method: 'post',
@@ -31,9 +32,9 @@ app.get('/a', (req, res) => {
 		orderSn.push(element.order_sn)
 		
 	  });
-	}).then(()=>{
-		orderSn.forEach(element => {
-			let config = {
+	}).then(async()=>{
+		await Promise.all(orderSn.map(async (element) => {
+			 	let config = {
 				method: 'get',
 				maxBodyLength: Infinity,
 				url: 'https://mobile.yangkeduo.com/goods_express.html?order_sn='+element,
@@ -42,8 +43,8 @@ app.get('/a', (req, res) => {
 				}
 			  };
 			  
-			  axios.request(config)
-			  .then((response) => {
+			  await  axios.request(config)
+			  .then(async(response) => {
 				let data=response.data
 				// console.log(JSON.stringify(response.data));
 				// let text = document.querySelector('.address-text').innerText;
@@ -62,7 +63,7 @@ app.get('/a', (req, res) => {
 					}
 				  };
 				  
-				  axios.request(config)
+				 await axios.request(config)
 				  .then((response) => {
 					let data=response.data
 					let dom = new JSDOM(data);
@@ -80,12 +81,8 @@ app.get('/a', (req, res) => {
 			  .catch((error) => {
 				console.log(error);
 			  });
-			  
-		})
-	}).then(()=>{
-			setTimeout(()=>{
-				res.send(outputArr)	
-			},20000)
+		  }));
+		  res.send(outputArr)	
 	})
 	.catch((error) => {
 	  console.log(error);
